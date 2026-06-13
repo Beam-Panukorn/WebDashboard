@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAGA — CanSat Ground Station</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<canvas id="holoCanvas"></canvas>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-icon">🚀</div>
+    <div class="logo-text">NAGA</div>
+  </div>
+  <div class="nav-item active" title="CanSat" onclick="showPage('cansat')">🥫</div>
+  <div class="sidebar-bottom">
+    <div class="status-dot"></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+
+
+  <!-- PAGE: CANSAT -->
+  <div id="page-cansat" class="page page-active">
+
+    <!-- CANSAT TOPBAR -->
+    <div class="topbar topbar-centered">
+      <div class="topbar-side">
+        <div class="live-badge" style="border-color:#a78bfa;color:#a78bfa;">
+          <div class="live-dot" style="background:#a78bfa;box-shadow:0 0 8px #a78bfa;"></div>
+          LIVE
+        </div>
+      </div>
+      <div class="topbar-center">
+        <div class="naga-neon">NAGA</div>
+        <div style="font-size:18px;font-weight:700;letter-spacing:3px;font-family:'Orbitron',monospace;background:linear-gradient(135deg,var(--sky),#a78bfa);background-clip:text;-webkit-text-fill-color:transparent;margin-top:2px;">CANSAT SENSOR DASHBOARD</div>
+      </div>
+      <div class="topbar-side" style="justify-content:flex-end;">
+        <div class="time-display" id="clockDisplay2">00:00:00</div>
+      </div>
+    </div>
+
+    <!-- CANSAT DASHBOARD GRID -->
+    <div class="cansat-dashboard-grid">
+
+      <!-- ROW 1: Gyro (full width) -->
+      <div class="cs-card cs-gyro-card" style="padding:0;overflow:hidden;">
+        <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+        <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px 8px;border-bottom:1px solid rgba(167,139,250,0.12);">
+          <div class="card-title" style="color:#a78bfa;"><span class="card-icon">🧭</span> GYROSCOPE — ORIENTATION</div>
+          <div class="card-badge" style="border-color:#a78bfa55;color:#a78bfa;">GY-91</div>
+        </div>
+
+        <div style="position:relative;width:100%;height:260px;background:rgba(0,6,14,0.7);">
+          <span style="position:absolute;top:14px;left:18px;font-family:'Orbitron',monospace;font-size:11px;color:#92E1FF;letter-spacing:1px;font-weight:700;">Z</span>
+          <span id="gyroXLabel" style="position:absolute;top:50%;right:18px;transform:translateY(-50%);font-family:'Orbitron',monospace;font-size:11px;color:#ff4e6a;letter-spacing:1px;font-weight:700;">X</span>
+          <canvas id="gyroAxesCanvas" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+        </div>
+
+        <div class="gyro-bars-section">
+          <div class="gyro-bar-col">
+            <div class="gyro-bar-label" style="color:#ff4e6a;">TILT (PITCH)</div>
+            <div class="gyro-hbar-wrap">
+              <div class="gyro-hbar-fill" id="gyroTiltBar" style="background:linear-gradient(90deg,#ff4e6a,#ff8a5b);"></div>
+            </div>
+            <div class="gyro-bar-val" style="color:#ff4e6a;"><span id="gyroTiltVal">0.0</span>°</div>
+            <div class="gyro-bar-sub">
+              <span style="color:var(--text-dim);font-size:8px;">Gx</span>
+              <span id="gyroGxDisp" style="color:#ff4e6a88;font-family:'Orbitron',monospace;font-size:9px;">0.00</span>
+              <span style="color:var(--text-dim);font-size:7px;">°/s</span>
+            </div>
+          </div>
+          <div class="gyro-bar-col">
+            <div class="gyro-bar-label" style="color:#f5d800;">SPIN (YAW)</div>
+            <div class="gyro-hbar-wrap">
+              <div class="gyro-hbar-fill" id="gyroSpinBar" style="background:linear-gradient(90deg,#f5d800,#ff9900);"></div>
+            </div>
+            <div class="gyro-bar-val" style="color:#f5d800;"><span id="gyroSpinVal">0.0</span>°</div>
+            <div class="gyro-bar-sub">
+              <span style="color:var(--text-dim);font-size:8px;">Gy</span>
+              <span id="gyroGyDisp" style="color:#f5d80088;font-family:'Orbitron',monospace;font-size:9px;">0.00</span>
+              <span style="color:var(--text-dim);font-size:7px;">°/s</span>
+            </div>
+          </div>
+          <div class="gyro-bar-col">
+            <div class="gyro-bar-label" style="color:#98FB98;">ROLL</div>
+            <div class="gyro-hbar-wrap">
+              <div class="gyro-hbar-fill" id="gyroRollBar2" style="background:linear-gradient(90deg,#98FB98,#56d8f5);"></div>
+            </div>
+            <div class="gyro-bar-val" style="color:#98FB98;"><span id="gyroRollDisp">0.0</span>°</div>
+            <div class="gyro-bar-sub">
+              <span style="color:var(--text-dim);font-size:8px;">Gz</span>
+              <span id="gyroGzDisp" style="color:#98FB9888;font-family:'Orbitron',monospace;font-size:9px;">0.00</span>
+              <span style="color:var(--text-dim);font-size:7px;">°/s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Artificial Horizon -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:32px;padding:10px 16px 14px;border-top:1px solid rgba(167,139,250,0.1);">
+          
+          <!-- Horizon Ball -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(167,139,250,0.6);letter-spacing:1px;">HORIZON</div>
+            <div style="position:relative;width:100px;height:100px;">
+              <canvas id="horizonCanvas" width="100" height="100" style="border-radius:50%;overflow:hidden;"></canvas>
+              <!-- crosshair -->
+              <div style="position:absolute;inset:0;pointer-events:none;">
+                <div style="position:absolute;top:50%;left:10px;right:10px;height:1px;background:rgba(255,255,255,0.5);transform:translateY(-50%);"></div>
+                <div style="position:absolute;left:50%;top:10px;bottom:10px;width:1px;background:rgba(255,255,255,0.3);transform:translateX(-50%);"></div>
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;border:1.5px solid #fff;border-radius:50%;"></div>
+              </div>
+            </div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:#a78bfa;">
+              R:<span id="horizRollVal">0.0</span>° P:<span id="horizPitchVal">0.0</span>°
+            </div>
+          </div>
+
+          <!-- Compass Rose -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(245,216,0,0.6);letter-spacing:1px;">HEADING</div>
+            <div style="position:relative;width:100px;height:100px;">
+              <canvas id="compassCanvas" width="100" height="100"></canvas>
+            </div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:#f5d800;">
+              YAW: <span id="compassYawVal">0.0</span>°
+            </div>
+          </div>
+
+          <!-- Pitch ladder -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(86,216,245,0.6);letter-spacing:1px;">PITCH LADDER</div>
+            <div style="position:relative;width:60px;height:100px;overflow:hidden;border:1px solid rgba(86,216,245,0.2);border-radius:4px;background:rgba(0,6,14,0.6);">
+              <canvas id="pitchLadderCanvas" width="60" height="100"></canvas>
+            </div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:#56d8f5;">
+              <span id="pitchLadderVal">0.0</span>°
+            </div>
+          </div>
+
+        </div>
+
+        <span id="gyroYawDisp" style="display:none;">0.0°</span>
+        <span id="gyroPitchDisp" style="display:none;">0.0°</span>
+        <span id="gyroRollBar" style="display:none;"></span>
+        <span id="gyroPitchBar" style="display:none;"></span>
+        <span id="gyroYawBar" style="display:none;"></span>
+        <span id="gyroGxBar" style="display:none;"></span>
+        <span id="gyroGyBar" style="display:none;"></span>
+        <span id="gyroGzBar" style="display:none;"></span>
+      </div>
+
+      <!-- ROW 2 RIGHT: Team Number -->
+      <div class="cs-card cs-team-card">
+        <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+        <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+        <div class="card-header">
+          <div class="card-title" style="color:var(--sky);"><span class="card-icon">🏷️</span> TEAM</div>
+        </div>
+        <div class="cs-team-number-wrap">
+          <div class="cs-team-ring"></div>
+          <div class="cs-team-number">4</div>
+          <div class="cs-team-label">NAGA CANSAT</div>
+        </div>
+      </div>
+
+      <!-- ROW 3 RIGHT: Accel Gauge -->
+      <div class="cs-card cs-accel-card">
+        <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+        <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+        <div class="card-header">
+          <div class="card-title" style="color:#56d8f5;"><span class="card-icon">🚀</span> ACCELERATION</div>
+          <div class="card-badge" style="border-color:#56d8f555;color:#56d8f5;">m/s²</div>
+        </div>
+        <div class="cs-accel-content">
+          <div class="cs-accel-gauge-wrap">
+            <canvas id="csAccelCanvas" width="200" height="200"></canvas>
+            <div class="cs-accel-center">
+              <div class="cs-accel-val" id="csAccelMag">0.00</div>
+              <div class="cs-accel-unit">m/s²</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ROW 2: Magnetometer -->
+      <div class="cs-card cs-mag-card">
+        <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+        <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+        <div class="card-header">
+          <div class="card-title" style="color:#a78bfa;"><span class="card-icon">🧲</span> MAGNETOMETER</div>
+          <div class="card-badge" style="border-color:#a78bfa55;color:#a78bfa;">MPU-9250</div>
+        </div>
+        <div class="cs-sensor-grid">
+          <div class="cs-sensor-item">
+            <div class="cs-sensor-label" style="color:#ff4e6a;">MX</div>
+            <div class="cs-sensor-val" id="csMxVal" style="color:#ff4e6a;">0.00</div>
+            <div class="cs-sensor-unit">μT</div>
+          </div>
+          <div class="cs-sensor-item">
+            <div class="cs-sensor-label" style="color:#98FB98;">MY</div>
+            <div class="cs-sensor-val" id="csMyVal" style="color:#98FB98;">0.00</div>
+            <div class="cs-sensor-unit">μT</div>
+          </div>
+          <div class="cs-sensor-item">
+            <div class="cs-sensor-label" style="color:#92E1FF;">MZ</div>
+            <div class="cs-sensor-val" id="csMzVal" style="color:#92E1FF;">0.00</div>
+            <div class="cs-sensor-unit">μT</div>
+          </div>
+        </div>
+        <div class="cs-mag-strength-wrap">
+          <div style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(167,139,250,0.55);letter-spacing:1px;">FIELD STRENGTH</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+            <div style="flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+              <div id="csMagStrengthBar" style="height:100%;border-radius:3px;width:0%;background:linear-gradient(90deg,#a78bfa,#56d8f5);transition:width 0.4s ease;box-shadow:0 0 8px #a78bfa88;"></div>
+            </div>
+            <div style="font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:#a78bfa;min-width:60px;text-align:right;"><span id="csMagStrengthVal">0.00</span> <span style="font-size:9px;color:rgba(167,139,250,0.5);">μT</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2: BMP280 -->
+      <div class="cs-card cs-bmp-card">
+        <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+        <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+        <div class="card-header">
+          <div class="card-title" style="color:#56d8f5;"><span class="card-icon">🌡</span> ATMOSPHERE — BMP280</div>
+          <div class="card-badge" style="border-color:#56d8f555;color:#56d8f5;">ENV</div>
+        </div>
+        <div class="cs-bmp-grid">
+          <div class="cs-bmp-item">
+            <canvas id="csTempCanvas" width="120" height="120"></canvas>
+            <div class="cs-bmp-center" id="csTempCenter">
+              <div class="cs-bmp-val" id="csTempVal" style="color:#ff8c42;">0.0</div>
+              <div class="cs-bmp-unit">°C</div>
+            </div>
+            <div class="cs-bmp-label" style="color:#ff8c42;">TEMPERATURE</div>
+          </div>
+          <div class="cs-bmp-item">
+            <canvas id="csAltCanvas" width="120" height="120"></canvas>
+            <div class="cs-bmp-center" id="csAltCenter">
+              <div class="cs-bmp-val" id="csAltVal" style="color:#00f5c4;">0.0</div>
+              <div class="cs-bmp-unit">m</div>
+            </div>
+            <div class="cs-bmp-label" style="color:#00f5c4;">ALTITUDE</div>
+          </div>
+          <div class="cs-bmp-item">
+            <canvas id="csPressCanvas" width="120" height="120"></canvas>
+            <div class="cs-bmp-center" id="csPressCenter">
+              <div class="cs-bmp-val" id="csPressVal" style="color:#f5d800;">0</div>
+              <div class="cs-bmp-unit">Pa</div>
+            </div>
+            <div class="cs-bmp-label" style="color:#f5d800;">PRESSURE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 3: RSSI + Accel side by side -->
+      <div class="cs-card cs-rssi-card">
+        <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+        <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+        <div class="card-header">
+          <div class="card-title" style="color:#00f5c4;"><span class="card-icon">📡</span> SIGNAL — RSSI</div>
+          <div class="card-badge" style="border-color:#00f5c455;color:#00f5c4;">LoRa</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:8px;flex:1;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+            <div style="font-family:'Orbitron',monospace;font-size:36px;font-weight:900;color:#00f5c4;text-shadow:0 0 20px #00f5c488;line-height:1;" id="csRssiVal">---</div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(0,245,196,0.5);letter-spacing:2px;">dBm</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+            <div id="csRssiBar1" style="width:60px;height:8px;border-radius:4px;background:rgba(0,245,196,0.1);border:1px solid rgba(0,245,196,0.2);transition:background 0.4s;"></div>
+            <div id="csRssiBar2" style="width:60px;height:8px;border-radius:4px;background:rgba(0,245,196,0.1);border:1px solid rgba(0,245,196,0.2);transition:background 0.4s;"></div>
+            <div id="csRssiBar3" style="width:60px;height:8px;border-radius:4px;background:rgba(0,245,196,0.1);border:1px solid rgba(0,245,196,0.2);transition:background 0.4s;"></div>
+            <div id="csRssiBar4" style="width:60px;height:8px;border-radius:4px;background:rgba(0,245,196,0.1);border:1px solid rgba(0,245,196,0.2);transition:background 0.4s;"></div>
+            <div id="csRssiQuality" style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,245,196,0.5);letter-spacing:1px;margin-top:2px;">NO SIGNAL</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end cansat-dashboard-grid -->
+
+  </div><!-- end page-cansat -->
+
+</main>
+<button onclick="connectSerial()" style="position:fixed; bottom:20px; right:20px; z-index:9999; padding:12px 20px; background:#00f5c4; color:#030e18; font-family:'Orbitron', sans-serif; font-weight:bold; border:none; border-radius:6px; cursor:pointer; box-shadow: 0 0 15px rgba(0,245,196,0.4);">
+  🔌 CONNECT SERIAL
+</button>
+<script src="main.js"></script>
+</body>
+</html>
